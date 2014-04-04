@@ -4,7 +4,7 @@ require "rbenv/rack"
 require "jenkins/rack"
 
 class RbenvDescriptor < Jenkins::Model::DefaultDescriptor
-  DEFAULT_VERSION = "1.9.3p429"
+  DEFAULT_VERSION = "1.9.3-p429"
   DEFAULT_GEM_LIST = "bundler,rake"
   DEFAULT_IGNORE_LOCAL_VERSION = false
   DEFAULT_RBENV_ROOT = "$HOME/.rbenv"
@@ -58,6 +58,11 @@ class RbenvWrapper < Jenkins::Tasks::BuildWrapper
     @build = build
     @launcher = launcher
     @listener = listener
+    if build.native.is_a?(Java::HudsonMatrix::MatrixRun) && build.native.getBuildVariables['RBENV_VERSION']
+      @version = build.native.getBuildVariables['RBENV_VERSION']
+      @listener << "Ignoring local version and setting RBENV_VERSION = #{@version} based on multi-configuration job axis."
+      @ignore_local_version = true
+    end
     Rbenv::Environment.new(self).setup!
   end
 
